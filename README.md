@@ -111,6 +111,12 @@ Replace `YOUR_API_KEY` with the key generated in Obsidian settings.
 |------|-------------|
 | `active_note` | Get the currently open note in Obsidian |
 
+### Command Tools
+| Tool | Description |
+|------|-------------|
+| `command_list` | List available Obsidian commands (filter by plugin name) |
+| `command_execute` | Execute any Obsidian command by ID (Templater, MetaBind, etc.) |
+
 ## MCP Resources
 
 | URI | Description |

@@ -7,6 +7,7 @@ import { registerEditTools } from "./tools/edit-tools";
 import { registerGraphTools } from "./tools/graph-tools";
 import { registerDataviewTools } from "./tools/dataview-tools";
 import { registerActiveTools } from "./tools/active-tools";
+import { registerCommandTools } from "./tools/command-tools";
 import { registerResources } from "./resources";
 import { createPromptsHandlers } from "./prompts";
 
@@ -141,6 +142,14 @@ export default class DataviewMcpPlugin extends Plugin {
 		registerActiveTools(
 			this.app,
 			this.mcpServer.getSecurityManager(),
+			this.mcpServer.registerTool.bind(this.mcpServer)
+		);
+
+		// Register command tools (only if enabled in settings)
+		registerCommandTools(
+			this.app,
+			this.mcpServer.getSecurityManager(),
+			this.settings.allowCommandExecution,
 			this.mcpServer.registerTool.bind(this.mcpServer)
 		);
 

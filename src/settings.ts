@@ -7,6 +7,7 @@ export interface DataviewMcpSettings {
 	apiKey: string;
 	autoStart: boolean;
 	readOnlyMode: boolean;
+	allowCommandExecution: boolean;
 	promptsFolder: string;
 }
 
@@ -15,6 +16,7 @@ export const DEFAULT_SETTINGS: DataviewMcpSettings = {
 	apiKey: "",
 	autoStart: true,
 	readOnlyMode: false,
+	allowCommandExecution: false,
 	promptsFolder: "prompts",
 };
 
@@ -102,6 +104,18 @@ export class DataviewMcpSettingTab extends PluginSettingTab {
 						this.plugin.settings.readOnlyMode = value;
 						await this.plugin.saveSettings();
 						this.plugin.updateSecurityMode();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Allow command execution")
+			.setDesc("Allow agents to execute Obsidian commands (Templater, MetaBind, etc.). Requires server restart.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.allowCommandExecution)
+					.onChange(async (value) => {
+						this.plugin.settings.allowCommandExecution = value;
+						await this.plugin.saveSettings();
 					})
 			);
 

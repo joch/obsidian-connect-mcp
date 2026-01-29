@@ -117,6 +117,45 @@ Replace `YOUR_API_KEY` with the key generated in Obsidian settings.
 | `command_list` | List available Obsidian commands (filter by plugin name) |
 | `command_execute` | Execute any Obsidian command by ID (Templater, MetaBind, etc.) |
 
+**Note:** Command tools must be enabled in plugin settings ("Allow command execution").
+
+## Templater Integration
+
+The `command_execute` tool can run Templater templates as commands, enabling AI agents to trigger your automation scripts (e.g., "consume wine bottle", "complete project", "mark article as read").
+
+### Exposing Templates as Commands
+
+By default, Templater templates are only accessible via the UI modal. To make them available as commands:
+
+1. Open Obsidian Settings → Templater
+2. Scroll to **Template Hotkeys**
+3. Click **Add new template hotkey** for each template you want to expose
+4. Select the template file (e.g., `apps/templater/wine/consume.md`)
+5. **Restart Obsidian** to register the new commands
+
+Each template gets two commands:
+- `templater-obsidian:path/to/template.md` - Run on active file ("Insert")
+- `templater-obsidian:create-path/to/template.md` - Create new file from template
+
+### Example Usage
+
+```
+# List available wine commands
+command_list with filter: "wine"
+
+# Execute consume template on active bottle note
+command_execute with commandId: "templater-obsidian:apps/templater/wine/consume.md"
+```
+
+### Recommended Templates to Expose
+
+Add templates that perform actions on existing notes:
+- Status changes (consume bottle, complete project, mark as read)
+- Property updates (cycle status, change priority)
+- File operations (archive, move to folder)
+
+Templates that require user input (modals, prompts) may not work well via MCP.
+
 ## MCP Resources
 
 | URI | Description |

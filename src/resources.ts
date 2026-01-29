@@ -46,7 +46,7 @@ export function registerResources(
 			}
 
 			// Check for Dataview
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			const dataviewEnabled = !!(app as any).plugins?.plugins?.dataview?.api;
 
 			return JSON.stringify(
@@ -76,7 +76,7 @@ export function registerResources(
 			mimeType: "text/markdown",
 		},
 		async (): Promise<string> => {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			const dataviewEnabled = !!(app as any).plugins?.plugins?.dataview?.api;
 
 			if (!dataviewEnabled) {

@@ -1,7 +1,8 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import { Server } from "http";
-import { App, Notice } from "obsidian";
+import { App } from "obsidian";
+// Using Server class as McpServer from high-level API doesn't have setRequestHandler
 import { Server as MCPServer } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
@@ -50,9 +51,7 @@ interface PromptDefinition {
 	description?: string;
 }
 
-interface PromptHandler {
-	(): Promise<{ description?: string; content: string }>;
-}
+// PromptHandler type removed - using inline type instead
 
 export class McpHttpServer {
 	private expressApp: Application;
@@ -193,7 +192,9 @@ export class McpHttpServer {
 		});
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-deprecated
 	private createMcpServer(): MCPServer {
+		// eslint-disable-next-line @typescript-eslint/no-deprecated
 		const server = new MCPServer(
 			{
 				name: "obsidian-connect-mcp",
@@ -215,7 +216,7 @@ export class McpHttpServer {
 		});
 
 		// Call tool handler
-		server.setRequestHandler(CallToolRequestSchema, async (request) => {
+		server.setRequestHandler(CallToolRequestSchema, async (request: { params: { name: string; arguments?: Record<string, unknown> } }) => {
 			const { name, arguments: args } = request.params;
 			const tool = this.tools.get(name);
 
@@ -244,7 +245,7 @@ export class McpHttpServer {
 		});
 
 		// Read resource handler
-		server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+		server.setRequestHandler(ReadResourceRequestSchema, async (request: { params: { uri: string } }) => {
 			const { uri } = request.params;
 			const resource = this.resources.get(uri);
 
@@ -284,7 +285,7 @@ export class McpHttpServer {
 		});
 
 		// Get prompt handler
-		server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+		server.setRequestHandler(GetPromptRequestSchema, async (request: { params: { name: string } }) => {
 			const { name } = request.params;
 
 			if (!this.promptHandler) {
@@ -342,7 +343,7 @@ export class McpHttpServer {
 
 			await transport.handleRequest(req, res);
 		} catch (error) {
-			console.error("MCP request error:", error);
+			console.warn("MCP request error:", error);
 			if (!res.headersSent) {
 				res.status(500).json({
 					jsonrpc: "2.0",
@@ -368,7 +369,7 @@ export class McpHttpServer {
 		return new Promise((resolve, reject) => {
 			this.server = this.expressApp.listen(this.config.port, "127.0.0.1", () => {
 				this.isRunning = true;
-				console.log(`MCP server started on http://127.0.0.1:${this.config.port}`);
+				console.debug(`MCP server started on http://127.0.0.1:${this.config.port}`);
 				resolve();
 			});
 
@@ -393,7 +394,7 @@ export class McpHttpServer {
 		return new Promise((resolve) => {
 			this.server?.close(() => {
 				this.isRunning = false;
-				console.log("MCP server stopped");
+				console.debug("MCP server stopped");
 				resolve();
 			});
 		});

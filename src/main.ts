@@ -1,3 +1,4 @@
+/* eslint-disable obsidianmd/ui/sentence-case */
 import { Notice, Plugin } from "obsidian";
 import { McpHttpServer } from "./mcp-server";
 import { DataviewMcpSettings, DEFAULT_SETTINGS, DataviewMcpSettingTab } from "./settings";
@@ -21,18 +22,24 @@ export default class DataviewMcpPlugin extends Plugin {
 		this.addCommand({
 			id: "start-server",
 			name: "Start MCP server",
-			callback: () => this.startServer(),
+			callback: (): void => {
+				void this.startServer();
+			},
 		});
 
 		this.addCommand({
 			id: "stop-server",
 			name: "Stop MCP server",
-			callback: () => this.stopServer(),
+			callback: (): void => {
+				void this.stopServer();
+			},
 		});
 
 		if (this.settings.autoStart && this.settings.apiKey) {
 			// Delay start to ensure other plugins (like Dataview) are loaded
-			setTimeout(() => this.startServer(), 1000);
+			setTimeout(() => {
+				void this.startServer();
+			}, 1000);
 		}
 	}
 

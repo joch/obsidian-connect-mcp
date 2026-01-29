@@ -1,4 +1,4 @@
-import { App, TFile, TFolder, normalizePath } from "obsidian";
+import { App, TFile } from "obsidian";
 import { SecurityManager } from "../security/security-manager";
 
 /**
@@ -313,8 +313,8 @@ export function registerVaultTools(
 					};
 				}
 
-				// Use trash instead of delete for safety
-				await app.vault.trash(file, true);
+				// Use FileManager.trashFile to respect user's file deletion preference
+				await app.fileManager.trashFile(file);
 
 				return {
 					content: [

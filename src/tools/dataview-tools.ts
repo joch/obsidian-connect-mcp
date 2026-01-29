@@ -26,11 +26,13 @@ interface DataviewApi {
  * Get the Dataview plugin API if available
  */
 function getDataviewApi(app: App): DataviewApi | null {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 	const dataviewPlugin = (app as any).plugins?.plugins?.dataview;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	if (!dataviewPlugin?.api) {
 		return null;
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return dataviewPlugin.api as DataviewApi;
 }
 

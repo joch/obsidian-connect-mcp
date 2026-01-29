@@ -1,8 +1,18 @@
 /*
+ * Connect MCP Plugin Styles
+ */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* Settings page code blocks */
+.connect-mcp-code-block {
+	background-color: var(--background-secondary);
+	padding: 10px;
+	border-radius: 5px;
+	overflow: auto;
+	margin-top: 4px;
+	margin-bottom: 12px;
+}
 
-If your plugin does not need CSS, delete this file.
-
-*/
+/* API key input field */
+.connect-mcp-api-key-input {
+	width: 250px;
+}

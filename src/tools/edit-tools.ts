@@ -250,21 +250,12 @@ export function registerEditTools(
 				const content = await app.vault.read(file);
 				let newContent: string;
 
-				switch (targetType) {
-					case "heading":
-						newContent = patchHeading(content, target, operation, patchContent);
-						break;
-					case "block":
-						newContent = patchBlock(content, target, operation, patchContent);
-						break;
-					case "frontmatter":
-						newContent = patchFrontmatter(content, target, operation, patchContent);
-						break;
-					default:
-						return {
-							content: [{ type: "text", text: `Unknown target type: ${targetType}` }],
-							isError: true,
-						};
+				if (targetType === "heading") {
+					newContent = patchHeading(content, target, operation, patchContent);
+				} else if (targetType === "block") {
+					newContent = patchBlock(content, target, operation, patchContent);
+				} else {
+					newContent = patchFrontmatter(content, target, operation, patchContent);
 				}
 
 				await app.vault.modify(file, newContent);
@@ -358,9 +349,6 @@ function patchHeading(
 	}
 
 	// Apply the patch
-	const headingLine = lines[targetStart];
-	const contentLines = lines.slice(targetStart + 1, targetEnd);
-
 	switch (operation) {
 		case "replace":
 			lines.splice(targetStart + 1, targetEnd - targetStart - 1, patchContent);

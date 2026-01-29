@@ -202,6 +202,88 @@ LIST FROM "" WHERE file.mday = date(today)
 TABLE length(rows) as Count FROM "" GROUP BY file.folder
 ```
 
+## Remote Access (Cloud Agents)
+
+To securely expose your MCP server to AI agents running in the cloud, use Cloudflare Tunnel. This provides HTTPS encryption without opening ports on your firewall.
+
+### Setup Cloudflare Tunnel
+
+1. Install cloudflared:
+   ```bash
+   # macOS
+   brew install cloudflared
+
+   # Windows
+   winget install Cloudflare.cloudflared
+
+   # Linux (Debian/Ubuntu)
+   curl -L https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-archive-keyring.gpg
+   echo "deb [signed-by=/usr/share/keyrings/cloudflare-archive-keyring.gpg] https://pkg.cloudflare.com/cloudflared $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
+   sudo apt update && sudo apt install cloudflared
+   ```
+
+2. Create a quick tunnel (no Cloudflare account needed):
+   ```bash
+   cloudflared tunnel --url http://localhost:27124
+   ```
+
+   This outputs a URL like `https://random-words.trycloudflare.com`
+
+3. Update your Claude Code MCP settings to use the tunnel URL:
+   ```json
+   {
+     "mcpServers": {
+       "obsidian": {
+         "command": "npx",
+         "args": [
+           "mcp-remote",
+           "https://random-words.trycloudflare.com/mcp",
+           "--header",
+           "Authorization:${AUTH}"
+         ],
+         "env": {
+           "AUTH": "Bearer YOUR_API_KEY"
+         }
+       }
+     }
+   }
+   ```
+
+### Persistent Tunnel (Optional)
+
+For a stable URL, create a named tunnel with a Cloudflare account:
+
+1. Login to Cloudflare:
+   ```bash
+   cloudflared tunnel login
+   ```
+
+2. Create a named tunnel:
+   ```bash
+   cloudflared tunnel create obsidian-mcp
+   ```
+
+3. Configure the tunnel (create `~/.cloudflared/config.yml`):
+   ```yaml
+   tunnel: obsidian-mcp
+   credentials-file: ~/.cloudflared/<tunnel-id>.json
+
+   ingress:
+     - hostname: obsidian-mcp.yourdomain.com
+       service: http://localhost:27124
+     - service: http_status:404
+   ```
+
+4. Add DNS record:
+   ```bash
+   cloudflared tunnel route dns obsidian-mcp obsidian-mcp.yourdomain.com
+   ```
+
+5. Run the tunnel:
+   ```bash
+   cloudflared tunnel run obsidian-mcp
+   ```
+
 ## Verifying the Setup
 
 ```bash
@@ -210,6 +292,9 @@ curl http://localhost:27124/health
 
 # MCP info
 curl http://localhost:27124/mcp
+
+# Via tunnel (if using remote access)
+curl https://your-tunnel-url.trycloudflare.com/health
 ```
 
 ## Development

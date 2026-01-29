@@ -1,6 +1,30 @@
 import { App, TFile, TFolder, normalizePath } from "obsidian";
 import { SecurityManager } from "../security/security-manager";
 
+/**
+ * Simple glob pattern matching
+ * Supports: * (any chars except /), ** (any chars including /), ? (single char)
+ */
+function matchGlob(path: string, pattern: string): boolean {
+	// Convert glob to regex
+	let regexStr = pattern
+		.replace(/[.+^${}()|[\]\\]/g, "\\$&") // Escape special regex chars
+		.replace(/\*\*/g, "{{GLOBSTAR}}") // Temp placeholder for **
+		.replace(/\*/g, "[^/]*") // * matches anything except /
+		.replace(/\?/g, "[^/]") // ? matches single char except /
+		.replace(/{{GLOBSTAR}}/g, ".*"); // ** matches anything including /
+
+	// Anchor the pattern
+	regexStr = `^${regexStr}$`;
+
+	try {
+		const regex = new RegExp(regexStr);
+		return regex.test(path);
+	} catch {
+		return false;
+	}
+}
+
 interface ToolResult {
 	content: Array<{ type: string; text: string }>;
 	isError?: boolean;
@@ -29,30 +53,45 @@ export function registerVaultTools(
 			inputSchema: {
 				type: "object",
 				properties: {
-					path: { type: "string", description: "Folder path (default: root)" },
+					path: { type: "string", description: "Folder path prefix (default: root)" },
+					pattern: { type: "string", description: "Glob pattern to match (e.g., '*.md', 'projects/**', '**/README.md')" },
+					limit: { type: "number", description: "Max number of files to return (default: all)" },
+					offset: { type: "number", description: "Number of files to skip for pagination (default: 0)" },
 				},
 			},
 		},
 		async (args): Promise<ToolResult> => {
 			const requestedPath = (args.path as string) || "";
+			const pattern = args.pattern as string | undefined;
+			const limit = args.limit as number | undefined;
+			const offset = (args.offset as number) || 0;
+
 			const files = app.vault.getMarkdownFiles();
 
-			// Filter by path prefix and security
+			// Filter by path prefix, pattern, and security
 			const filtered = files.filter((f) => {
 				if (requestedPath && !f.path.startsWith(requestedPath)) {
+					return false;
+				}
+				if (pattern && !matchGlob(f.path, pattern)) {
 					return false;
 				}
 				return security.isAccessible(f.path);
 			});
 
+			// Sort files
+			const sortedFiles = filtered.map((f) => f.path).sort();
+
+			// Apply pagination
+			const totalFiles = sortedFiles.length;
+			const paginatedFiles = limit
+				? sortedFiles.slice(offset, offset + limit)
+				: sortedFiles.slice(offset);
+
 			// Group by folder for better structure
 			const folders = new Set<string>();
-			const fileList: string[] = [];
-
-			for (const file of filtered) {
-				fileList.push(file.path);
-				// Track folders
-				const parts = file.path.split("/");
+			for (const filePath of paginatedFiles) {
+				const parts = filePath.split("/");
 				let current = "";
 				for (let i = 0; i < parts.length - 1; i++) {
 					const part = parts[i];
@@ -70,8 +109,11 @@ export function registerVaultTools(
 						text: JSON.stringify(
 							{
 								folders: Array.from(folders).sort(),
-								files: fileList.sort(),
-								total: fileList.length,
+								files: paginatedFiles,
+								total: totalFiles,
+								returned: paginatedFiles.length,
+								offset,
+								hasMore: offset + paginatedFiles.length < totalFiles,
 							},
 							null,
 							2

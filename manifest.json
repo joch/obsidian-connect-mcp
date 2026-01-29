@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "obsidian-connect-mcp",
+	"name": "Connect MCP",
 	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"minAppVersion": "1.0.0",
+	"description": "MCP server for AI agents to access your vault - read, edit, search notes and run Dataview queries.",
+	"author": "joch",
+	"authorUrl": "https://github.com/joch/obsidian-connect-mcp",
+	"isDesktopOnly": true
 }

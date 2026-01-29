@@ -1,99 +1,154 @@
-import {App, Editor, MarkdownView, Modal, Notice, Plugin} from 'obsidian';
-import {DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab} from "./settings";
+import { Notice, Plugin } from "obsidian";
+import { McpHttpServer } from "./mcp-server";
+import { DataviewMcpSettings, DEFAULT_SETTINGS, DataviewMcpSettingTab } from "./settings";
+import { registerVaultTools } from "./tools/vault-tools";
+import { registerEditTools } from "./tools/edit-tools";
+import { registerGraphTools } from "./tools/graph-tools";
+import { registerDataviewTools } from "./tools/dataview-tools";
+import { registerActiveTools } from "./tools/active-tools";
+import { registerResources } from "./resources";
+import { createPromptsHandlers } from "./prompts";
 
-// Remember to rename these classes and interfaces!
+export default class DataviewMcpPlugin extends Plugin {
+	settings: DataviewMcpSettings = DEFAULT_SETTINGS;
+	private mcpServer: McpHttpServer | null = null;
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
-
-	async onload() {
+	async onload(): Promise<void> {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
+		this.addSettingTab(new DataviewMcpSettingTab(this.app, this));
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
-
-		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
+			id: "start-server",
+			name: "Start MCP server",
+			callback: () => this.startServer(),
 		});
-		// This adds an editor command that can perform some operation on the current editor instance
+
 		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				editor.replaceSelection('Sample editor command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-				return false;
-			}
+			id: "stop-server",
+			name: "Stop MCP server",
+			callback: () => this.stopServer(),
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			new Notice("Click");
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-
+		if (this.settings.autoStart && this.settings.apiKey) {
+			// Delay start to ensure other plugins (like Dataview) are loaded
+			setTimeout(() => this.startServer(), 1000);
+		}
 	}
 
-	onunload() {
+	onunload(): void {
+		void this.stopServer();
 	}
 
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MyPluginSettings>);
+	async loadSettings(): Promise<void> {
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			(await this.loadData()) as Partial<DataviewMcpSettings>
+		);
 	}
 
-	async saveSettings() {
+	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 	}
-}
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
+	async startServer(): Promise<void> {
+		if (this.mcpServer?.isServerRunning()) {
+			new Notice("MCP server is already running");
+			return;
+		}
+
+		if (!this.settings.apiKey) {
+			new Notice("Please set an API key in plugin settings");
+			return;
+		}
+
+		this.mcpServer = new McpHttpServer(this.app, this, {
+			port: this.settings.port,
+			apiKey: this.settings.apiKey,
+		});
+
+		// Register tools, resources, and prompts
+		this.registerCapabilities();
+
+		try {
+			await this.mcpServer.start();
+			new Notice(`MCP server started on port ${this.settings.port}`);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			new Notice(`Failed to start MCP server: ${message}`);
+			this.mcpServer = null;
+		}
 	}
 
-	onOpen() {
-		let {contentEl} = this;
-		contentEl.setText('Woah!');
+	async stopServer(): Promise<void> {
+		if (this.mcpServer) {
+			await this.mcpServer.stop();
+			this.mcpServer = null;
+			new Notice("MCP server stopped");
+		}
 	}
 
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
+	isServerRunning(): boolean {
+		return this.mcpServer?.isServerRunning() ?? false;
+	}
+
+	updateSecurityMode(): void {
+		if (this.mcpServer) {
+			this.mcpServer.getSecurityManager().setReadOnlyMode(this.settings.readOnlyMode);
+		}
+	}
+
+	private registerCapabilities(): void {
+		if (!this.mcpServer) return;
+
+		// Register vault tools
+		registerVaultTools(
+			this.app,
+			this.mcpServer.getSecurityManager(),
+			this.mcpServer.registerTool.bind(this.mcpServer)
+		);
+
+		// Register edit tools
+		registerEditTools(
+			this.app,
+			this.mcpServer.getSecurityManager(),
+			this.mcpServer.registerTool.bind(this.mcpServer)
+		);
+
+		// Register graph tools
+		registerGraphTools(
+			this.app,
+			this.mcpServer.getSecurityManager(),
+			this.mcpServer.registerTool.bind(this.mcpServer)
+		);
+
+		// Register dataview tools
+		registerDataviewTools(
+			this.app,
+			this.mcpServer.getSecurityManager(),
+			this.mcpServer.registerTool.bind(this.mcpServer)
+		);
+
+		// Register active note tools
+		registerActiveTools(
+			this.app,
+			this.mcpServer.getSecurityManager(),
+			this.mcpServer.registerTool.bind(this.mcpServer)
+		);
+
+		// Register resources
+		registerResources(
+			this.app,
+			"1.0.0",
+			this.mcpServer.registerResource.bind(this.mcpServer)
+		);
+
+		// Register prompts handlers
+		const promptsHandlers = createPromptsHandlers(this.app, this.settings.promptsFolder);
+		this.mcpServer.setPromptsHandlers(
+			promptsHandlers.listPrompts,
+			promptsHandlers.getPrompt
+		);
 	}
 }

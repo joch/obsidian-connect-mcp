@@ -1,90 +1,182 @@
-# Obsidian Sample Plugin
+# Connect MCP
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+An Obsidian plugin that runs an MCP (Model Context Protocol) server, enabling AI agents like Claude to access your vault - read, edit, search notes, and run Dataview queries.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Architecture
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
-
-## First time developing plugins?
-
-Quick starting guide for new plugin devs:
-
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
-
-## Releasing new releases
-
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+```
+AI Agent (Claude Code/Desktop)
+    ↓ (via mcp-remote bridge)
+Obsidian Plugin (Express + MCP Server on port 27124)
+    ↓
+Obsidian Vault
 ```
 
-If you have multiple URLs, you can also do:
+The MCP server runs directly inside the Obsidian plugin - no separate server process needed.
+
+## Prerequisites
+
+- [Obsidian](https://obsidian.md/) desktop app
+- [Dataview plugin](https://github.com/blacksmithgu/obsidian-dataview) installed in Obsidian (optional, for DQL queries)
+- Node.js 18+
+
+## Installation
+
+### 1. Install the Obsidian Plugin
+
+1. Build the plugin:
+   ```bash
+   npm install
+   npm run build
+   ```
+
+2. Copy the plugin files to your Obsidian vault:
+   ```bash
+   mkdir -p /path/to/vault/.obsidian/plugins/obsidian-connect-mcp
+   cp main.js manifest.json styles.css /path/to/vault/.obsidian/plugins/obsidian-connect-mcp/
+   ```
+
+3. In Obsidian, go to Settings → Community plugins → Enable "Connect MCP"
+
+4. Configure the plugin:
+   - Go to Settings → Connect MCP
+   - Click "Generate" to create an **API Key**
+   - Optionally change the port (default: 27124)
+   - Click "Start Server" or enable auto-start
+
+### 2. Configure Claude Code/Desktop
+
+Add this to your Claude Code MCP settings:
 
 ```json
 {
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
+  "mcpServers": {
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://localhost:27124/mcp",
+        "--header",
+        "Authorization:${AUTH}"
+      ],
+      "env": {
+        "AUTH": "Bearer YOUR_API_KEY"
+      }
     }
+  }
 }
 ```
 
-## API Documentation
+Replace `YOUR_API_KEY` with the key generated in Obsidian settings.
 
-See https://docs.obsidian.md
+## Available MCP Tools
+
+### Vault Tools
+| Tool | Description |
+|------|-------------|
+| `vault_list` | List files and folders in the vault |
+| `vault_read` | Read a note's content and frontmatter |
+| `vault_create` | Create a new note |
+| `vault_update` | Replace entire file content |
+| `vault_delete` | Delete a note (moves to trash) |
+| `vault_search` | Search notes by content |
+
+### Edit Tools
+| Tool | Description |
+|------|-------------|
+| `vault_edit` | Find and replace text using fuzzy matching |
+| `vault_edit_line` | Insert or replace content at a specific line |
+| `vault_patch` | Edit a specific section: heading, block, or frontmatter |
+
+### Graph Tools
+| Tool | Description |
+|------|-------------|
+| `graph_info` | Get link statistics for a note |
+| `graph_links` | Get backlinks and forward links for a note |
+
+### Dataview Tools
+| Tool | Description |
+|------|-------------|
+| `dataview_query` | Execute a Dataview DQL query |
+
+### Active Tools
+| Tool | Description |
+|------|-------------|
+| `active_note` | Get the currently open note in Obsidian |
+
+## MCP Resources
+
+| URI | Description |
+|-----|-------------|
+| `obsidian://vault-info` | Vault name, file counts, plugin status |
+| `obsidian://dataview-reference` | DQL syntax quick reference |
+
+## MCP Prompts
+
+Create markdown files in the `prompts` folder (configurable in settings) to expose them as MCP prompts:
+
+```markdown
+---
+description: Short description shown in prompt list
+---
+
+Your prompt content here with DQL examples, instructions, etc.
+```
+
+## Security Features
+
+### API Key Authentication
+All requests require a valid API key in the Authorization header.
+
+### Read-Only Mode
+Enable in settings to block all write operations (create, update, delete).
+
+### .mcpignore File
+Create a `.mcpignore` file in your vault root to block access to sensitive paths:
+
+```
+# Block private folders
+private/
+journal/
+
+# Block specific files
+secrets.md
+```
+
+Uses gitignore-style patterns.
+
+## Example DQL Queries
+
+```sql
+-- List notes with a tag
+LIST FROM #project
+
+-- Table of tasks
+TABLE file.name, due, status FROM "Tasks" WHERE !completed
+
+-- Notes modified today
+LIST FROM "" WHERE file.mday = date(today)
+
+-- Count notes by folder
+TABLE length(rows) as Count FROM "" GROUP BY file.folder
+```
+
+## Verifying the Setup
+
+```bash
+# Health check (no auth required)
+curl http://localhost:27124/health
+
+# MCP info
+curl http://localhost:27124/mcp
+```
+
+## Development
+
+```bash
+npm run dev  # Watch mode
+```
+
+## License
+
+MIT

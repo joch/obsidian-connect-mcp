@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "obsidian-connect-mcp",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "MCP server for AI agents to access your Obsidian vault",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
@@ -10,10 +10,12 @@
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint ."
 	},
-	"keywords": [],
-	"license": "0-BSD",
+	"keywords": ["obsidian", "dataview", "mcp", "api"],
+	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^16.11.6",
+		"@types/node": "^20.10.0",
+		"@types/express": "^5.0.0",
+		"@types/cors": "^2.8.0",
 		"esbuild": "0.25.5",
 		"eslint-plugin-obsidianmd": "0.1.9",
 		"globals": "14.0.0",
@@ -24,6 +26,9 @@
 		"jiti": "2.6.1"
 	},
 	"dependencies": {
-		"obsidian": "latest"
+		"obsidian": "latest",
+		"@modelcontextprotocol/sdk": "^1.25.0",
+		"express": "^5.0.0",
+		"cors": "^2.8.5"
 	}
 }

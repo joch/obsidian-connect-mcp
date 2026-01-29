@@ -20,3 +20,7 @@ data.json
 
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
+
+# MCP Server build output
+mcp-server/node_modules
+mcp-server/dist

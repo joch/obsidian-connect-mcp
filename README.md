@@ -120,15 +120,49 @@ Replace `YOUR_API_KEY` with the key generated in Obsidian settings.
 
 ## MCP Prompts
 
-Create markdown files in the `prompts` folder (configurable in settings) to expose them as MCP prompts:
+Prompts let you give AI agents context about your vault that they can discover and use automatically. Create markdown files in the `prompts` folder (configurable in settings) to help agents understand your vault structure, conventions, and useful queries.
+
+### Why Use Prompts?
+
+When an AI agent connects to your vault, it has no idea how you've organized things. Prompts solve this by providing:
+
+- **Vault structure** - Describe your folder hierarchy and what goes where
+- **Dataview queries** - Pre-built DQL queries for common searches in your vault
+- **Naming conventions** - Explain your file naming patterns and metadata fields
+- **Workflows** - Document how you use tags, links, or specific note types
+
+### Prompt Format
 
 ```markdown
 ---
-description: Short description shown in prompt list
+description: Brief description the agent sees when listing prompts
 ---
 
-Your prompt content here with DQL examples, instructions, etc.
+# My Vault Guide
+
+## Folder Structure
+- `projects/` - Active project notes with status frontmatter
+- `archive/` - Completed projects
+- `daily/` - Daily notes in YYYY-MM-DD format
+
+## Useful Queries
+
+Find incomplete tasks:
+\`\`\`dataview
+TASK FROM "projects" WHERE !completed
+\`\`\`
+
+Recent notes:
+\`\`\`dataview
+LIST FROM "" WHERE file.mtime > date(today) - dur(7 days) SORT file.mtime DESC
+\`\`\`
+
+## Conventions
+- Projects use `status` field: active, waiting, done
+- People notes are in `people/` with `birthday` and `company` fields
 ```
+
+The filename (without `.md`) becomes the prompt name that agents can request.
 
 ## Security Features
 

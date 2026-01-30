@@ -17,14 +17,14 @@ export function createPromptsHandlers(
 	app: App,
 	promptsFolder: string
 ): {
-	listPrompts: () => Promise<PromptDefinition[]>;
+	listPrompts: () => PromptDefinition[];
 	getPrompt: (name: string) => Promise<PromptContent>;
 } {
 	return {
 		/**
 		 * List all prompts from the configured folder
 		 */
-		async listPrompts(): Promise<PromptDefinition[]> {
+		listPrompts(): PromptDefinition[] {
 			const folder = app.vault.getAbstractFileByPath(promptsFolder);
 			if (!folder) {
 				return [];

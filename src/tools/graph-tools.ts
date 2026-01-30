@@ -35,16 +35,16 @@ export function registerGraphTools(
 				required: ["path"],
 			},
 		},
-		async (args): Promise<ToolResult> => {
+		(args): Promise<ToolResult> => {
 			try {
 				const path = security.validateRead(args.path as string);
 
 				const file = app.vault.getAbstractFileByPath(path);
 				if (!file || !(file instanceof TFile)) {
-					return {
+					return Promise.resolve({
 						content: [{ type: "text", text: `File not found: ${path}` }],
 						isError: true,
-					};
+					});
 				}
 
 				const cache = app.metadataCache.getFileCache(file);
@@ -91,7 +91,7 @@ export function registerGraphTools(
 					}
 				}
 
-				return {
+				return Promise.resolve({
 					content: [
 						{
 							type: "text",
@@ -109,14 +109,14 @@ export function registerGraphTools(
 							),
 						},
 					],
-				};
+				});
 			} catch (error) {
-				return {
+				return Promise.resolve({
 					content: [
 						{ type: "text", text: error instanceof Error ? error.message : String(error) },
 					],
 					isError: true,
-				};
+				});
 			}
 		}
 	);
@@ -134,16 +134,16 @@ export function registerGraphTools(
 				required: ["path"],
 			},
 		},
-		async (args): Promise<ToolResult> => {
+		(args): Promise<ToolResult> => {
 			try {
 				const path = security.validateRead(args.path as string);
 
 				const file = app.vault.getAbstractFileByPath(path);
 				if (!file || !(file instanceof TFile)) {
-					return {
+					return Promise.resolve({
 						content: [{ type: "text", text: `File not found: ${path}` }],
 						isError: true,
-					};
+					});
 				}
 
 				const cache = app.metadataCache.getFileCache(file);
@@ -187,7 +187,7 @@ export function registerGraphTools(
 					}
 				}
 
-				return {
+				return Promise.resolve({
 					content: [
 						{
 							type: "text",
@@ -202,14 +202,14 @@ export function registerGraphTools(
 							),
 						},
 					],
-				};
+				});
 			} catch (error) {
-				return {
+				return Promise.resolve({
 					content: [
 						{ type: "text", text: error instanceof Error ? error.message : String(error) },
 					],
 					isError: true,
-				};
+				});
 			}
 		}
 	);

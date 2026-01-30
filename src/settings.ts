@@ -46,7 +46,7 @@ export class DataviewMcpSettingTab extends PluginSettingTab {
 		// API Key with Generate button
 		new Setting(containerEl)
 			.setName("API key")
-			.setDesc("Secret key for authenticating MCP requests (required).")
+			.setDesc("Secret key for authenticating requests (required).")
 			.addText((text) => {
 				text
 					.setPlaceholder("Click generate or enter your own")
@@ -67,7 +67,7 @@ export class DataviewMcpSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Port")
-			.setDesc("MCP server port (default: 27124).")
+			.setDesc("Server port (default: 27124).")
 			.addText((text) =>
 				text
 					.setPlaceholder("27124")
@@ -83,7 +83,7 @@ export class DataviewMcpSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Auto-start server")
-			.setDesc("Automatically start the MCP server when Obsidian opens.")
+			.setDesc("Automatically start the server when the app opens.")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.autoStart)
@@ -108,7 +108,7 @@ export class DataviewMcpSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Allow command execution")
-			.setDesc("Allow agents to execute Obsidian commands (Templater, MetaBind, etc.). Requires server restart.")
+			.setDesc("Allow agents to execute app commands. Requires server restart.")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.allowCommandExecution)
@@ -120,7 +120,7 @@ export class DataviewMcpSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Prompts folder")
-			.setDesc("Folder containing prompt templates for MCP agents.")
+			.setDesc("Folder containing prompt templates for agents.")
 			.addText((text) =>
 				text
 					.setPlaceholder("Prompts")
@@ -155,7 +155,7 @@ export class DataviewMcpSettingTab extends PluginSettingTab {
 		// Client configuration
 		new Setting(containerEl).setName("Client configuration").setHeading();
 
-		new Setting(containerEl).setDesc("Add this to your Claude Code MCP settings:");
+		new Setting(containerEl).setDesc("Add this to your AI assistant's settings:");
 
 		const configPre = containerEl.createEl("pre");
 		configPre.addClass("connect-mcp-code-block");
@@ -180,11 +180,11 @@ export class DataviewMcpSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName("Prompts").setHeading();
 
 		new Setting(containerEl).setDesc(
-			`Prompts let you give AI agents context about your vault that they can discover and use automatically. Create notes in the "${this.plugin.settings.promptsFolder}" folder to help agents understand your vault structure, naming conventions, folder organization, and useful Dataview queries for your workflow.`
+			`Prompts let you give AI agents context about your vault that they can discover and use automatically. Create notes in the "${this.plugin.settings.promptsFolder}" folder to help agents understand your vault structure, naming conventions, folder organization, and useful queries for your workflow.`
 		);
 
 		const exampleSetting = new Setting(containerEl);
-		exampleSetting.setDesc("Example use cases: vault structure overview, Dataview queries, note templates, workflows.");
+		exampleSetting.setDesc("Example use cases: vault structure overview, query examples, note templates, workflows.");
 
 		const promptFormat = containerEl.createEl("pre");
 		promptFormat.addClass("connect-mcp-code-block");

@@ -66,7 +66,7 @@ export class McpHttpServer {
 	private tools: Map<string, { definition: ToolDefinition; handler: ToolHandler }> = new Map();
 	private resources: Map<string, { definition: ResourceDefinition; handler: ResourceHandler }> =
 		new Map();
-	private promptsLoader?: () => Promise<PromptDefinition[]>;
+	private promptsLoader?: () => PromptDefinition[] | Promise<PromptDefinition[]>;
 	private promptHandler?: (name: string) => Promise<{ description?: string; content: string }>;
 
 	constructor(app: App, plugin: DataviewMcpPlugin, config: McpServerConfig) {
@@ -105,7 +105,7 @@ export class McpHttpServer {
 	 * Set prompts loader and handler
 	 */
 	setPromptsHandlers(
-		loader: () => Promise<PromptDefinition[]>,
+		loader: () => PromptDefinition[] | Promise<PromptDefinition[]>,
 		handler: (name: string) => Promise<{ description?: string; content: string }>
 	): void {
 		this.promptsLoader = loader;

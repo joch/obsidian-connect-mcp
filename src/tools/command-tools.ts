@@ -44,7 +44,7 @@ export function registerCommandTools(
 				},
 			},
 		},
-		async (args): Promise<ToolResult> => {
+		(args): Promise<ToolResult> => {
 			try {
 				// Check if read-only mode blocks command listing (it shouldn't, but check anyway)
 				if (security.readOnlyMode) {
@@ -67,7 +67,7 @@ export function registerCommandTools(
 				// Sort by id for consistent output
 				filtered.sort((a, b) => a.id.localeCompare(b.id));
 
-				return {
+				return Promise.resolve({
 					content: [
 						{
 							type: "text",
@@ -84,9 +84,9 @@ export function registerCommandTools(
 							),
 						},
 					],
-				};
+				});
 			} catch (error) {
-				return {
+				return Promise.resolve({
 					content: [
 						{
 							type: "text",
@@ -94,7 +94,7 @@ export function registerCommandTools(
 						},
 					],
 					isError: true,
-				};
+				});
 			}
 		}
 	);

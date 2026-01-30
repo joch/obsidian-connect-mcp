@@ -60,7 +60,7 @@ export function registerVaultTools(
 				},
 			},
 		},
-		async (args): Promise<ToolResult> => {
+		(args): Promise<ToolResult> => {
 			const requestedPath = (args.path as string) || "";
 			const pattern = args.pattern as string | undefined;
 			const limit = args.limit as number | undefined;
@@ -102,7 +102,7 @@ export function registerVaultTools(
 				}
 			}
 
-			return {
+			return Promise.resolve({
 				content: [
 					{
 						type: "text",
@@ -120,7 +120,7 @@ export function registerVaultTools(
 						),
 					},
 				],
-			};
+			});
 		}
 	);
 

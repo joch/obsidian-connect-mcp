@@ -26,7 +26,7 @@ The MCP server runs directly inside the Obsidian plugin - no separate server pro
 
 1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) from Community Plugins
 2. Open BRAT settings and click "Add Beta Plugin"
-3. Enter: `joch/obsidian-connect-mcp`
+3. Enter: `joch/connect-mcp`
 4. Enable "Connect MCP" in Community Plugins
 
 ### Option B: Manual Installation
@@ -39,8 +39,8 @@ The MCP server runs directly inside the Obsidian plugin - no separate server pro
 
 2. Copy the plugin files to your Obsidian vault:
    ```bash
-   mkdir -p /path/to/vault/.obsidian/plugins/obsidian-connect-mcp
-   cp main.js manifest.json styles.css /path/to/vault/.obsidian/plugins/obsidian-connect-mcp/
+   mkdir -p /path/to/vault/.obsidian/plugins/connect-mcp
+   cp main.js manifest.json styles.css /path/to/vault/.obsidian/plugins/connect-mcp/
    ```
 
 3. In Obsidian, go to Settings → Community plugins → Enable "Connect MCP"

@@ -22,6 +22,14 @@ export default tseslint.config(
 		},
 	},
 	...obsidianmd.configs.recommended,
+	{
+		rules: {
+			// Allow MCP, Dataview, Templater, MetaBind acronyms/names in UI text
+			"obsidianmd/ui/sentence-case": ["error", {
+				ignoreRegex: ["MCP", "Dataview", "Templater", "MetaBind", "Claude Code"]
+			}]
+		}
+	},
 	globalIgnores([
 		"node_modules",
 		"dist",

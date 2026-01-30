@@ -1,10 +1,6 @@
-import { App, TFile, MetadataCache } from "obsidian";
+import { App, TFile } from "obsidian";
 import { SecurityManager } from "../security/security-manager";
-
-// Extended MetadataCache interface with internal methods
-interface ExtendedMetadataCache extends MetadataCache {
-	getBacklinksForFile(file: TFile): { data: Map<string, unknown>; count(): number } | null;
-}
+import { getMetadataCacheWithBacklinks } from "../obsidian-internals";
 
 interface ToolResult {
 	content: Array<{ type: string; text: string }>;
@@ -58,7 +54,7 @@ export function registerGraphTools(
 				const embedLinks = cache?.embeds?.length || 0;
 
 				// Count backlinks (files that link to this one)
-				const metadataCache = app.metadataCache as ExtendedMetadataCache;
+				const metadataCache = getMetadataCacheWithBacklinks(app);
 				const backlinks = metadataCache.getBacklinksForFile(file);
 				const inLinks = backlinks?.count() || 0;
 
@@ -85,8 +81,7 @@ export function registerGraphTools(
 				}
 				// Also check frontmatter tags
 				if (cache?.frontmatter?.tags) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					const fmTags = cache.frontmatter.tags;
+					const fmTags: unknown = cache.frontmatter.tags;
 					if (Array.isArray(fmTags)) {
 						for (const tag of fmTags) {
 							if (typeof tag === "string" && !tags.includes(`#${tag}`)) {
@@ -181,8 +176,8 @@ export function registerGraphTools(
 				}
 
 				// Get backlinks (files that link to this one)
-				const metadataCache = app.metadataCache as ExtendedMetadataCache;
-				const backlinksData = metadataCache.getBacklinksForFile(file);
+				const metadataCacheExt = getMetadataCacheWithBacklinks(app);
+				const backlinksData = metadataCacheExt.getBacklinksForFile(file);
 				const backlinks: string[] = [];
 				if (backlinksData) {
 					for (const [sourcePath] of backlinksData.data) {

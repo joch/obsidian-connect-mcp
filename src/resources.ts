@@ -1,4 +1,5 @@
 import { App } from "obsidian";
+import { isDataviewEnabled } from "./obsidian-internals";
 
 interface ResourceDefinition {
 	uri: string;
@@ -27,7 +28,7 @@ export function registerResources(
 			description: "Current vault status and metadata",
 			mimeType: "application/json",
 		},
-		async (): Promise<string> => {
+		(): Promise<string> => {
 			const files = app.vault.getMarkdownFiles();
 			const allFiles = app.vault.getFiles();
 
@@ -46,10 +47,9 @@ export function registerResources(
 			}
 
 			// Check for Dataview
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-			const dataviewEnabled = !!(app as any).plugins?.plugins?.dataview?.api;
+			const dataviewEnabled = isDataviewEnabled(app);
 
-			return JSON.stringify(
+			return Promise.resolve(JSON.stringify(
 				{
 					vault: app.vault.getName(),
 					plugin: "obsidian-connect-mcp",
@@ -63,7 +63,7 @@ export function registerResources(
 				},
 				null,
 				2
-			);
+			));
 		}
 	);
 
@@ -75,12 +75,11 @@ export function registerResources(
 			description: "Quick reference for Dataview Query Language syntax",
 			mimeType: "text/markdown",
 		},
-		async (): Promise<string> => {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-			const dataviewEnabled = !!(app as any).plugins?.plugins?.dataview?.api;
+		(): Promise<string> => {
+			const dataviewEnabled = isDataviewEnabled(app);
 
 			if (!dataviewEnabled) {
-				return `# Dataview Not Installed
+				return Promise.resolve(`# Dataview Not Installed
 
 The Dataview plugin is not installed or enabled in this vault.
 
@@ -89,10 +88,10 @@ To use DQL queries:
 2. Enable the plugin in Settings > Community Plugins
 3. Restart the MCP server
 
-Once installed, you can use the \`dataview_query\` tool to run DQL queries.`;
+Once installed, you can use the \`dataview_query\` tool to run DQL queries.`);
 			}
 
-			return `# Dataview Query Language (DQL) Reference
+			return Promise.resolve(`# Dataview Query Language (DQL) Reference
 
 ## Query Types
 
@@ -191,7 +190,7 @@ TASK
 FROM "Tasks"
 WHERE !completed AND file.ctime > date(today) - dur(7 days)
 \`\`\`
-`;
+`);
 		}
 	);
 }

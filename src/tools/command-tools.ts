@@ -1,5 +1,6 @@
 import { App } from "obsidian";
 import { SecurityManager } from "../security/security-manager";
+import { getAppInternals } from "../obsidian-internals";
 
 interface ToolResult {
 	content: Array<{ type: string; text: string }>;
@@ -52,11 +53,8 @@ export function registerCommandTools(
 
 				const filter = (args.filter as string | undefined)?.toLowerCase();
 
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-				const commands = (app as any).commands.listCommands() as Array<{
-					id: string;
-					name: string;
-				}>;
+				const appInternals = getAppInternals(app);
+				const commands = appInternals.commands.listCommands();
 
 				const filtered = filter
 					? commands.filter(
@@ -137,11 +135,8 @@ export function registerCommandTools(
 				}
 
 				// Verify the command exists
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-				const commands = (app as any).commands.listCommands() as Array<{
-					id: string;
-					name: string;
-				}>;
+				const appInternals = getAppInternals(app);
+				const commands = appInternals.commands.listCommands();
 				const command = commands.find((cmd) => cmd.id === commandId);
 
 				if (!command) {
@@ -157,8 +152,7 @@ export function registerCommandTools(
 				}
 
 				// Execute the command
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-				await (app as any).commands.executeCommandById(commandId);
+				await appInternals.commands.executeCommandById(commandId);
 
 				return {
 					content: [

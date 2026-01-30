@@ -1,4 +1,3 @@
-/* eslint-disable obsidianmd/ui/sentence-case */
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type DataviewMcpPlugin from "./main";
 
@@ -124,7 +123,7 @@ export class DataviewMcpSettingTab extends PluginSettingTab {
 			.setDesc("Folder containing prompt templates for MCP agents.")
 			.addText((text) =>
 				text
-					.setPlaceholder("prompts")
+					.setPlaceholder("Prompts")
 					.setValue(this.plugin.settings.promptsFolder)
 					.onChange(async (value) => {
 						this.plugin.settings.promptsFolder = value || "prompts";

@@ -1,39 +1,10 @@
 import { App } from "obsidian";
 import { SecurityManager } from "../security/security-manager";
+import { getDataviewApi } from "../obsidian-internals";
 
 interface ToolResult {
 	content: Array<{ type: string; text: string }>;
 	isError?: boolean;
-}
-
-// Dataview API interface (subset of what we need)
-interface DataviewApi {
-	query(
-		query: string,
-		originFile?: string
-	): Promise<{
-		successful: boolean;
-		value?: {
-			type: string;
-			headers?: string[];
-			values?: unknown[];
-		};
-		error?: string;
-	}>;
-}
-
-/**
- * Get the Dataview plugin API if available
- */
-function getDataviewApi(app: App): DataviewApi | null {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-	const dataviewPlugin = (app as any).plugins?.plugins?.dataview;
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	if (!dataviewPlugin?.api) {
-		return null;
-	}
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	return dataviewPlugin.api as DataviewApi;
 }
 
 /**

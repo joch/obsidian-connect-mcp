@@ -1,4 +1,3 @@
-/* eslint-disable obsidianmd/ui/sentence-case */
 import { Notice, Plugin } from "obsidian";
 import { McpHttpServer } from "./mcp-server";
 import { DataviewMcpSettings, DEFAULT_SETTINGS, DataviewMcpSettingTab } from "./settings";
@@ -22,7 +21,7 @@ export default class DataviewMcpPlugin extends Plugin {
 
 		this.addCommand({
 			id: "start-server",
-			name: "Start MCP server",
+			name: "Start server",
 			callback: (): void => {
 				void this.startServer();
 			},
@@ -30,7 +29,7 @@ export default class DataviewMcpPlugin extends Plugin {
 
 		this.addCommand({
 			id: "stop-server",
-			name: "Stop MCP server",
+			name: "Stop server",
 			callback: (): void => {
 				void this.stopServer();
 			},
@@ -62,7 +61,7 @@ export default class DataviewMcpPlugin extends Plugin {
 
 	async startServer(): Promise<void> {
 		if (this.mcpServer?.isServerRunning()) {
-			new Notice("MCP server is already running");
+			new Notice("Server is already running");
 			return;
 		}
 
@@ -93,7 +92,7 @@ export default class DataviewMcpPlugin extends Plugin {
 		if (this.mcpServer) {
 			await this.mcpServer.stop();
 			this.mcpServer = null;
-			new Notice("MCP server stopped");
+			new Notice("Server stopped");
 		}
 	}
 

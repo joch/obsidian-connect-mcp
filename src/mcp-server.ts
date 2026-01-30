@@ -2,8 +2,7 @@ import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import { Server } from "http";
 import { App } from "obsidian";
-// Using Server class as McpServer from high-level API doesn't have setRequestHandler
-import { Server as MCPServer } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
 	ListToolsRequestSchema,
@@ -192,10 +191,8 @@ export class McpHttpServer {
 		});
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-deprecated
-	private createMcpServer(): MCPServer {
-		// eslint-disable-next-line @typescript-eslint/no-deprecated
-		const server = new MCPServer(
+	private createMcpServer(): McpServer {
+		const mcpServer = new McpServer(
 			{
 				name: "obsidian-connect-mcp",
 				version: "1.0.0",
@@ -209,10 +206,13 @@ export class McpHttpServer {
 			}
 		);
 
+		// Access the underlying Server instance for setting request handlers
+		const server = mcpServer.server;
+
 		// List tools handler
-		server.setRequestHandler(ListToolsRequestSchema, async () => {
+		server.setRequestHandler(ListToolsRequestSchema, () => {
 			const toolsList = Array.from(this.tools.values()).map((t) => t.definition);
-			return { tools: toolsList };
+			return Promise.resolve({ tools: toolsList });
 		});
 
 		// Call tool handler
@@ -239,9 +239,9 @@ export class McpHttpServer {
 		});
 
 		// List resources handler
-		server.setRequestHandler(ListResourcesRequestSchema, async () => {
+		server.setRequestHandler(ListResourcesRequestSchema, () => {
 			const resourcesList = Array.from(this.resources.values()).map((r) => r.definition);
-			return { resources: resourcesList };
+			return Promise.resolve({ resources: resourcesList });
 		});
 
 		// Read resource handler
@@ -312,7 +312,7 @@ export class McpHttpServer {
 			}
 		});
 
-		return server;
+		return mcpServer;
 	}
 
 	private async handleMcpRequest(req: Request, res: Response): Promise<void> {

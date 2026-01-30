@@ -324,9 +324,21 @@ export class McpHttpServer {
 			if (sessionId && this.transports.has(sessionId)) {
 				// Existing session
 				transport = this.transports.get(sessionId)!;
+			} else if (sessionId && !this.transports.has(sessionId)) {
+				// Client provided a session ID that doesn't exist (expired or invalid)
+				// Return error so client knows to re-initialize
+				res.status(400).json({
+					jsonrpc: "2.0",
+					error: {
+						code: -32000,
+						message: "Session expired or invalid. Please re-initialize.",
+					},
+					id: null,
+				});
+				return;
 			} else {
-				// New session
-				const newSessionId = sessionId || randomUUID();
+				// New session (no session ID provided)
+				const newSessionId = randomUUID();
 				const mcpServer = this.createMcpServer();
 
 				transport = new StreamableHTTPServerTransport({

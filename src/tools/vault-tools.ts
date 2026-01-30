@@ -339,7 +339,7 @@ export function registerVaultTools(
 	registerTool(
 		{
 			name: "vault_search",
-			description: "Search notes by content",
+			description: "Full-text search in note content. Use dataview_query instead for structured queries (by frontmatter, tags, folders, dates).",
 			inputSchema: {
 				type: "object",
 				properties: {

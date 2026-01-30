@@ -55,7 +55,7 @@ export function registerDataviewTools(
 	registerTool(
 		{
 			name: "dataview_query",
-			description: "Execute a Dataview DQL query",
+			description: "Query notes using Dataview DQL. PREFERRED for finding notes by frontmatter fields, tags, folders, or dates. Supports LIST, TABLE, TASK queries. Use vault_search only for full-text content search.",
 			inputSchema: {
 				type: "object",
 				properties: {

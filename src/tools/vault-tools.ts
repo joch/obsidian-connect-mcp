@@ -55,7 +55,8 @@ export function registerVaultTools(
 				properties: {
 					path: { type: "string", description: "Folder path prefix (default: root)" },
 					pattern: { type: "string", description: "Glob pattern to match (e.g., '*.md', 'projects/**', '**/README.md')" },
-					limit: { type: "number", description: "Max number of files to return (default: all)" },
+					sort: { type: "string", enum: ["alphabetical", "modified", "created"], description: "Sort order (default: alphabetical). 'modified' sorts by last modified time descending, 'created' by creation time descending." },
+					limit: { type: "number", description: "Max number of files to return (default: 100, use -1 for all)" },
 					offset: { type: "number", description: "Number of files to skip for pagination (default: 0)" },
 				},
 			},
@@ -63,7 +64,9 @@ export function registerVaultTools(
 		(args): Promise<ToolResult> => {
 			const requestedPath = (args.path as string) || "";
 			const pattern = args.pattern as string | undefined;
-			const limit = args.limit as number | undefined;
+			const sort = (args.sort as string) || "alphabetical";
+			const rawLimit = (args.limit as number | undefined) ?? 100;
+			const limit = rawLimit === -1 ? undefined : rawLimit;
 			const offset = (args.offset as number) || 0;
 
 			const files = app.vault.getMarkdownFiles();
@@ -80,18 +83,38 @@ export function registerVaultTools(
 			});
 
 			// Sort files
-			const sortedFiles = filtered.map((f) => f.path).sort();
+			if (sort === "modified") {
+				filtered.sort((a, b) => b.stat.mtime - a.stat.mtime);
+			} else if (sort === "created") {
+				filtered.sort((a, b) => b.stat.ctime - a.stat.ctime);
+			} else {
+				filtered.sort((a, b) => a.path.localeCompare(b.path));
+			}
 
 			// Apply pagination
-			const totalFiles = sortedFiles.length;
-			const paginatedFiles = limit
-				? sortedFiles.slice(offset, offset + limit)
-				: sortedFiles.slice(offset);
+			const totalFiles = filtered.length;
+			const paginated = limit
+				? filtered.slice(offset, offset + limit)
+				: filtered.slice(offset);
+
+			// Build file entries with metadata when sorting by time
+			const includeTimestamps = sort === "modified" || sort === "created";
+			const fileEntries = paginated.map((f) => {
+				if (includeTimestamps) {
+					return {
+						path: f.path,
+						mtime: new Date(f.stat.mtime).toISOString(),
+						ctime: new Date(f.stat.ctime).toISOString(),
+						size: f.stat.size,
+					};
+				}
+				return f.path;
+			});
 
 			// Group by folder for better structure
 			const folders = new Set<string>();
-			for (const filePath of paginatedFiles) {
-				const parts = filePath.split("/");
+			for (const file of paginated) {
+				const parts = file.path.split("/");
 				let current = "";
 				for (let i = 0; i < parts.length - 1; i++) {
 					const part = parts[i];
@@ -109,11 +132,12 @@ export function registerVaultTools(
 						text: JSON.stringify(
 							{
 								folders: Array.from(folders).sort(),
-								files: paginatedFiles,
+								files: fileEntries,
 								total: totalFiles,
-								returned: paginatedFiles.length,
+								returned: paginated.length,
 								offset,
-								hasMore: offset + paginatedFiles.length < totalFiles,
+								sort,
+								hasMore: offset + paginated.length < totalFiles,
 							},
 							null,
 							2

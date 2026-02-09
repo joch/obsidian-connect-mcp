@@ -1,7 +1,7 @@
 {
 	"id": "connect-mcp",
 	"name": "Connect MCP",
-	"version": "1.1.5",
+	"version": "1.1.6",
 	"minAppVersion": "1.0.0",
 	"description": "MCP server for AI agents to access your vault - read, edit, search notes and run Dataview queries.",
 	"author": "Johnny Chadda",

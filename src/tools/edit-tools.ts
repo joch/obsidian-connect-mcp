@@ -206,7 +206,7 @@ export function registerEditTools(
 	registerTool(
 		{
 			name: "vault_patch",
-			description: "Edit a specific section: heading, block, or frontmatter field",
+			description: "Edit a specific section of a note. For headings: targets are created if missing. Tip: use vault_read first to understand the note structure before patching.",
 			inputSchema: {
 				type: "object",
 				properties: {
@@ -226,7 +226,7 @@ export function registerEditTools(
 						enum: ["append", "prepend", "replace"],
 						description: "How to modify",
 					},
-					content: { type: "string", description: "Content to add/replace" },
+					content: { type: "string", description: "The body content only — do not include the heading itself (e.g. for target 'Daily Standup', send the content that goes under '## Daily Standup', not the heading line)" },
 				},
 				required: ["path", "targetType", "target", "operation", "content"],
 			},
@@ -249,13 +249,18 @@ export function registerEditTools(
 
 				const content = await app.vault.read(file);
 				let newContent: string;
+				let action: string;
 
 				if (targetType === "heading") {
-					newContent = patchHeading(content, target, operation, patchContent);
+					const result = patchHeading(content, target, operation, patchContent);
+					newContent = result.content;
+					action = result.action;
 				} else if (targetType === "block") {
 					newContent = patchBlock(content, target, operation, patchContent);
+					action = `${operation}d block '${target}'`;
 				} else {
 					newContent = patchFrontmatter(content, target, operation, patchContent);
+					action = `${operation}d frontmatter field '${target}'`;
 				}
 
 				await app.vault.modify(file, newContent);
@@ -266,11 +271,9 @@ export function registerEditTools(
 							type: "text",
 							text: JSON.stringify(
 								{
+									success: true,
 									path,
-									targetType,
-									target,
-									operation,
-									patched: true,
+									action,
 								},
 								null,
 								2
@@ -294,12 +297,17 @@ export function registerEditTools(
  * Patch content under a heading
  * Heading path format: "Section" or "Section::Subsection"
  */
+interface PatchResult {
+	content: string;
+	action: string;
+}
+
 function patchHeading(
 	content: string,
 	headingPath: string,
 	operation: "append" | "prepend" | "replace",
 	patchContent: string
-): string {
+): PatchResult {
 	const lines = content.split("\n");
 	const headings = headingPath.split("::");
 
@@ -344,24 +352,42 @@ function patchHeading(
 		}
 	}
 
+	// Strip leading heading from content if it matches the target
+	const targetHeading = headings[headings.length - 1] || headingPath;
+	const escapedHeading = targetHeading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const cleanedContent = patchContent.replace(
+		new RegExp(`^#{1,6}\\s+${escapedHeading}\\s*\n?`),
+		""
+	);
+
 	if (targetStart === -1) {
-		throw new Error(`Heading not found: ${headingPath}`);
+		// Heading not found — create it at the end of the file (upsert)
+		const level = headings.length + 1; // h2 for top-level, h3 for nested, etc.
+		const headingPrefix = "#".repeat(Math.min(level, 6));
+		const trailingNewline = lines[lines.length - 1] === "" ? "" : "\n";
+		return {
+			content: content + trailingNewline + "\n" + headingPrefix + " " + targetHeading + "\n" + cleanedContent + "\n",
+			action: `created heading '${targetHeading}' with content`,
+		};
 	}
 
 	// Apply the patch
 	switch (operation) {
 		case "replace":
-			lines.splice(targetStart + 1, targetEnd - targetStart - 1, patchContent);
+			lines.splice(targetStart + 1, targetEnd - targetStart - 1, cleanedContent);
 			break;
 		case "prepend":
-			lines.splice(targetStart + 1, 0, patchContent);
+			lines.splice(targetStart + 1, 0, cleanedContent);
 			break;
 		case "append":
-			lines.splice(targetEnd, 0, patchContent);
+			lines.splice(targetEnd, 0, cleanedContent);
 			break;
 	}
 
-	return lines.join("\n");
+	return {
+		content: lines.join("\n"),
+		action: `${operation}d content under existing heading '${targetHeading}'`,
+	};
 }
 
 /**
